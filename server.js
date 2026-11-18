@@ -72,11 +72,13 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
   console.log(`\n======================================================`);
   console.log(`✈️  WANDERLUST TRAVEL BOOKING PLATFORM IS RUNNING!`);
   console.log(`======================================================`);
-  console.log(`Local Access URL: http://127.0.0.1:${PORT}`);
+  console.log(`Listening on:     http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
   console.log(`Directory:        ${PUBLIC_DIR}`);
   console.log(`Press Ctrl + C to stop the server.`);
   console.log(`======================================================\n`);

@@ -35,6 +35,44 @@ Simply double-click `index.html` or open it directly in Google Chrome, Microsoft
 
 ---
 
+## 🔴 Deploy to Red Hat OpenShift (Without GitHub)
+
+You can deploy directly to your Red Hat OpenShift cluster from your local directory without using Git or GitHub using OpenShift's native **Binary Build**:
+
+### 1. Log In to Your OpenShift Cluster
+In your terminal, paste the login command from your OpenShift Web Console (top right menu -> *Copy login command*):
+```bash
+oc login --token=<your-token> --server=<your-openshift-api-url>
+```
+
+### 2. Run the Automated Deployment Script
+- On Windows (PowerShell):
+  ```powershell
+  .\deploy-openshift.ps1
+  ```
+- On Linux/macOS/Git Bash:
+  ```bash
+  chmod +x deploy-openshift.sh
+  ./deploy-openshift.sh
+  ```
+
+### Or Step-by-Step Manual Commands:
+```bash
+# 1. Create a project
+oc new-project travel-booking
+
+# 2. Apply ImageStream, BuildConfig, Deployment, Service & Route
+oc apply -f openshift/app.yaml
+
+# 3. Stream local code directly to OpenShift (Zero GitHub!)
+oc start-build travel-booking-app --from-dir=. --follow
+
+# 4. View your live application URL
+oc get route travel-booking-app
+```
+
+---
+
 ## 💱 Multi-Currency Support
 Switch between currencies seamlessly in the header navigation:
 - **USD ($)**

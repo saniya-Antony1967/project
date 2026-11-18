@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: List
+items:
+  # 1. ImageStream to store built container images inside the OpenShift internal registry
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: travel-booking-app
+      labels:
+        app: travel-booking-app
+
+  # 2. BuildConfig with Binary input (no GitHub/Git required!)
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: travel-booking-app
+      labels:
+        app: travel-booking-app
+    spec:
+      source:
+        type: Binary
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile
+      output:
+        to:
+          kind: ImageStreamTag
+          name: travel-booking-app:latest
+
+  # 3. Deployment to run and scale the pods
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: travel-booking-app
+      labels:
+        app: travel-booking-app
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: travel-booking-app
+      template:
+        metadata:
+          labels:
+            app: travel-booking-app
+        spec:
+          containers:
+            - name: travel-booking-app
+              image: travel-booking-app:latest
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 3000
+                  protocol: TCP
+                  name: http
+              env:
+                - name: PORT
+                  value: "3000"
+                - name: HOST
+                  value: "0.0.0.0"
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "300m"
+                  memory: "256Mi"
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 3000
+                initialDelaySeconds: 5
+                periodSeconds: 10
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 3000
+                initialDelaySeconds: 3
+                periodSeconds: 5
+
+  # 4. Service to expose the pod internally inside OpenShift
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: travel-booking-app
+      labels:
+        app: travel-booking-app
+    spec:
+      ports:
+        - name: 3000-tcp
+          port: 3000
+          targetPort: 3000
+          protocol: TCP
+      selector:
+        app: travel-booking-app
+
+  # 5. OpenShift Route to expose the service to the internet (gives live public URL)
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: travel-booking-app
+      labels:
+        app: travel-booking-app
+    spec:
+      to:
+        kind: Service
+        name: travel-booking-app
+        weight: 100
+      port:
+        targetPort: 3000-tcp
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
